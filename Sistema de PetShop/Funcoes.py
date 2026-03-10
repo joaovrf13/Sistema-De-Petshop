@@ -28,7 +28,6 @@ def Cadastrar_Pets():
      "NomePet" : NomePet,
      "Raca" : Raca,
      "Sexo" : Sexo,
-     "DocumentoDono" : DocumentoDono
     }
     Pets.append(Pet)
 
@@ -44,7 +43,7 @@ def Listar_Clientes():
 def Listar_Pets():
   print("== Pets Cadastrados ==")
   for Pet in Pets:
-   print("Nome: ", Pet["Nome"])
+   print("Nome: ", Pet["NomePet"])
    print("Raca: ", Pet["Raca"])
    print("Sexo: ", Pet["Sexo"])
 
@@ -62,17 +61,22 @@ def Cadastar_Servicos():
       3:{'nome': 'Consulta','preco': 120},
       4:{'nome': 'Hospedagem','preco': 150},
     }
- 
  while True:
-   OpcaoServico = int(input("Selecione um serviço: "))
-   if OpcaoServico in Servicos_Disponiveis:
-    servico = Servicos_Disponiveis[OpcaoServico]
-    Servicos.append(servico)
-    break
+ OpcaoServico = int(input("Selecione um serviço: "))
+ if OpcaoServico in Servicos_Disponiveis:
+   servico = Servicos_Disponiveis[OpcaoServico]
+   Servicos.append(servico)
+   break
    else:
-    print("Serviço Indisponivel")
+   print("Serviço Indisponivel")
+    
+ 
+ 
 
 
+def Relatorio():
+ for cliente, pet, servico in zip(Clientes,Pets,Servicos):
+   print("Cliente:", cliente , "| Pet:", pet, "| Serviços:", servico)
   
 
  
