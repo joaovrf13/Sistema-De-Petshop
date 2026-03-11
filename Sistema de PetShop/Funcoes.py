@@ -24,12 +24,24 @@ def Cadastrar_Pets():
     Sexo = input("Digite o sexo: ")
     DocumentoDono = input("Digite o documento do dono: ")
 
+    Dono_Encontrado = False
+
+    for Cliente in Clientes:
+     if Cliente["Documento"] == DocumentoDono:
+       Dono_Encontrado = True
+       break
+     else:
+       print("O dono não foi cadastrado, faça o cadastro primeiro para prosseguir com o cadastro do pet")
+       return
+     
     Pet = {
      "NomePet" : NomePet,
      "Raca" : Raca,
      "Sexo" : Sexo,
+     "DocumentoDono": DocumentoDono
     }
     Pets.append(Pet)
+    print("Cadastro do pet feito com sucesso!")
 
  
 def Listar_Clientes():
@@ -39,6 +51,7 @@ def Listar_Clientes():
     print("Documento: ", Cliente["Documento"])
     print("Telefone: ", Cliente["Telefone"])
     print("Endereço: ", Cliente["Endereco"])
+    print("------------------------------------")
 
 def Listar_Pets():
   print("== Pets Cadastrados ==")
@@ -46,7 +59,7 @@ def Listar_Pets():
    print("Nome: ", Pet["NomePet"])
    print("Raca: ", Pet["Raca"])
    print("Sexo: ", Pet["Sexo"])
-
+   print("---------------------")
 
 def Cadastar_Servicos():
  print("== Serviços ==")
@@ -61,14 +74,23 @@ def Cadastar_Servicos():
       3:{'nome': 'Consulta','preco': 120},
       4:{'nome': 'Hospedagem','preco': 150},
     }
+ 
+ Nome_Pet = input("Digite o nome do pet: ") 
  while True:
- OpcaoServico = int(input("Selecione um serviço: "))
- if OpcaoServico in Servicos_Disponiveis:
-   servico = Servicos_Disponiveis[OpcaoServico]
-   Servicos.append(servico)
-   break
+   OpcaoServico = int(input("Selecione um serviço: "))
+   if OpcaoServico in Servicos_Disponiveis:
+     servico = {
+       "pet": Nome_Pet,
+       "servico": Servicos_Disponiveis[OpcaoServico]["nome"],
+       "preco": Servicos_Disponiveis[OpcaoServico]["preco"]
+     }
+     Servicos.append(servico)
+     print("Serviço cadastrado com sucesso!")
+     break
    else:
-   print("Serviço Indisponivel")
+    print("Serviço Indisponivel")
+
+  
     
  
  
