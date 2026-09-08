@@ -1,39 +1,47 @@
-from ui.menu import Exibir_Menu
-from ui.listagem import Listar_Clientes, Listar_Pets
-from flask import Flask, render_template, request
+import os
+
+from flask import Flask, flash, redirect, render_template, request, url_for
+
+from repositories.dados import Servicos_Disponiveis
 from services.petshop_service import (
-    Cadastrar_Clientes,
-    Cadastrar_Pets,
-    Cadastrar_Servicos,
-    Relatorio,
-    Buscar_Pet,
-    Faturamento
+    cadastrar_cliente_com_pet,
+    clientes_com_pets,
+    obter_resumo,
 )
 
 
-
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "petshop-dev-key")
 
-@app.route("/")
+
+@app.get("/")
 def homepage():
-    return render_template("index.html")
+    return render_template(
+        "index.html",
+        resumo=obter_resumo(),
+        clientes=clientes_com_pets(),
+        servicos=Servicos_Disponiveis,
+    )
 
 
-@app.route("/cadastrar_cliente", methods=["POST"])
-def cadastrar_clientes():
-    nome = request.form.get("nome")
-    documento = request.form.get("documento")
-    telefone = request.form.get("telefone")
-    endereco = request.form.get("endereco")
-    nomedopet = request.form.get("nome-pet")
-    tipopet = request.form.get("tipo-pet")
-    servico = request.form.get("servico")
+@app.post("/cadastros")
+def cadastrar():
+    try:
+        cadastrar_cliente_com_pet(
+            nome=request.form.get("nome", ""),
+            documento=request.form.get("documento", ""),
+            telefone=request.form.get("telefone", ""),
+            endereco=request.form.get("endereco", ""),
+            nome_pet=request.form.get("nome_pet", ""),
+            tipo_pet=request.form.get("tipo_pet", ""),
+            servico_id=request.form.get("servico_id", ""),
+        )
+        flash("Cliente e pet cadastrados com sucesso.", "success")
+    except ValueError as erro:
+        flash(str(erro), "error")
 
-    Cadastrar_Clientes(nome, documento, telefone, endereco)
-    Cadastrar_Pets(documento, nomedopet, tipopet, servico)
-    return "Cliente Cadastrado!"
+    return redirect(url_for("homepage"))
 
 
-
-if __name__ =="__main__":
-    app.run()
+if __name__ == "__main__":
+    app.run(debug=True)
