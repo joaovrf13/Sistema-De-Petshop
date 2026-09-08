@@ -44,4 +44,4 @@ python main.py
 - `templates/`: páginas HTML;
 - `static/`: estilos, JavaScript e imagens.
 
-> Os registros ainda ficam em memória e são apagados quando o servidor reinicia. A próxima evolução recomendada é adicionar SQLite e testes automatizados.
+> Os registros ainda ficam em memória e são apagados quando o servidor reinicia.
