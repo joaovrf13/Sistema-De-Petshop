@@ -1,110 +1,166 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../static/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistema de gestão para pet shop">
+  <title>Petly | Gestão Pet</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
 <body>
-      <aside class="menu">
-         <h2>🐾 PetShop</h2>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-mark">🐾</span>
+      <div><strong>Petly</strong><small>Gestão Pet</small></div>
+      <button class="close-menu" type="button" aria-label="Fechar menu">×</button>
+    </div>
 
-         <nav>
-            <a href="#">Clientes</a>
-            <a href="#">Pets</a>
-            <a href="#">Serviços</a>
-            <a href="#">Agendamentos</a>
-         </nav>
-      </aside>
+    <p class="menu-label">MENU PRINCIPAL</p>
+    <nav aria-label="Navegação principal">
+      <button class="nav-item active" type="button" data-view="painel"><span>▦</span> Painel</button>
+      <button class="nav-item" type="button" data-view="clientes"><span>♙</span> Clientes e pets</button>
+      <button class="nav-item" type="button" data-view="servicos"><span>✦</span> Serviços</button>
+      <button class="nav-item" type="button" data-view="financeiro"><span>R$</span> Financeiro</button>
+    </nav>
 
-      <main class="conteudo">
-        <h1>Bem-vindo ao sistema de petshop</h1>
-        <p>Selecione uma opção do menu ao lado</p>
+    <div class="sidebar-footer">
+      <button class="nav-item" type="button"><span>⚙</span> Configurações</button>
+      <div class="profile"><span class="avatar">JV</span><div><strong>João Victor</strong><small>Administrador</small></div></div>
+    </div>
+  </aside>
+  <button class="backdrop" type="button" aria-label="Fechar menu"></button>
 
-        <section class="card-inicio">
-            <h2>Área inicial</h2>
-            <p>Feita para cadastrar clientes, pets, serviços e agendamentos.</p>
-        </section>
+  <main class="main">
+    <header class="topbar">
+      <button class="menu-toggle" type="button" aria-label="Abrir menu">☰</button>
+      <label class="global-search">
+        <span>⌕</span>
+        <input id="global-search" type="search" placeholder="Pesquisar cliente ou pet..." autocomplete="off">
+      </label>
+      <button class="notification" type="button" aria-label="Notificações">♢<i></i></button>
+      <button class="primary open-modal" type="button"><span>＋</span> Novo cadastro</button>
+    </header>
 
-        <section class="cards">
-            <div class="card">
-                <h3>Clientes</h3>
-                <p>0 cadastrados</p>
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+      {% for categoria, mensagem in mensagens %}
+        <div class="flash {{ categoria }}" role="status"><span>{{ "✓" if categoria == "success" else "!" }}</span>{{ mensagem }}<button type="button">×</button></div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="content">
+      <section class="view active" id="painel">
+        <div class="page-heading">
+          <div><p>VISÃO GERAL</p><h1>Olá, João! <span>👋</span></h1><small>Acompanhe o movimento do seu pet shop.</small></div>
+          <button class="primary open-modal" type="button">＋ Novo cadastro</button>
+        </div>
+
+        <div class="metrics">
+          <article class="metric"><span class="metric-icon blue">♙</span><div><small>Clientes cadastrados</small><strong>{{ resumo.clientes }}</strong><em>Responsáveis ativos</em></div></article>
+          <article class="metric"><span class="metric-icon teal">🐾</span><div><small>Pets cadastrados</small><strong>{{ resumo.pets }}</strong><em>Vinculados aos clientes</em></div></article>
+          <article class="metric"><span class="metric-icon amber">✦</span><div><small>Serviços registrados</small><strong>{{ resumo.atendimentos }}</strong><em>Atendimentos realizados</em></div></article>
+          <article class="metric"><span class="metric-icon rose">R$</span><div><small>Faturamento</small><strong>R$ {{ "%.2f"|format(resumo.faturamento)|replace(".", ",") }}</strong><em>Total dos serviços</em></div></article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="section-title"><div><h2>Clientes recentes</h2><p>Últimos cadastros realizados</p></div><button class="text-button" type="button" data-view-link="clientes">Ver todos ›</button></div>
+            {% if clientes %}
+              <div class="recent-list">
+                {% for cliente in clientes[-4:]|reverse %}
+                  <article class="recent-item searchable">
+                    <span class="client-avatar">{{ cliente.Nome[:2]|upper }}</span>
+                    <div><strong>{{ cliente.Nome }}</strong><small>{{ cliente.Telefone }}</small></div>
+                    <div class="pet-summary">
+                      {% if cliente.Pets %}<strong>{{ cliente.Pets[0].NomePet }}</strong><small>{{ cliente.Pets[0].TipoPet }}</small>{% else %}<small>Sem pet vinculado</small>{% endif %}
+                    </div>
+                    <span class="status">Ativo</span>
+                  </article>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="empty"><span>🐾</span><strong>Nenhum cliente cadastrado</strong><p>Faça o primeiro cadastro para começar.</p><button class="text-button open-modal" type="button">Cadastrar agora</button></div>
+            {% endif %}
+          </section>
+
+          <aside class="welcome-card">
+            <img src="{{ url_for('static', filename='img/petshop-welcome.jpg') }}" alt="Cachorro e gato em uma recepção de pet shop">
+            <div class="welcome-content"><span>CADASTRO RÁPIDO</span><h2>Pronto para cuidar de mais um pet?</h2><p>Cadastre o responsável, o pet e o primeiro serviço de uma vez.</p><button class="light-button open-modal" type="button">＋ Cadastrar agora</button></div>
+          </aside>
+        </div>
+
+        <div class="bottom-grid">
+          <section class="panel quick-panel">
+            <div class="section-title"><div><h2>Acessos rápidos</h2><p>Atalhos para as tarefas mais usadas</p></div></div>
+            <div class="quick-actions">
+              <button class="open-modal" type="button"><span>♙</span><div><strong>Novo cliente</strong><small>Cadastre o responsável</small></div><b>›</b></button>
+              <button class="open-modal" type="button"><span>🐾</span><div><strong>Novo pet</strong><small>Vincule ao responsável</small></div><b>›</b></button>
+              <button type="button" data-view-link="servicos"><span>✦</span><div><strong>Ver serviços</strong><small>Consulte preços</small></div><b>›</b></button>
+              <button type="button" data-view-link="financeiro"><span>R$</span><div><strong>Faturamento</strong><small>Acompanhe os resultados</small></div><b>›</b></button>
             </div>
-            <div class="card">
-                <h3>Pets</h3>
-                <p>0 cadastrados</p>
-            </div>
-            <div class="card">
-                <h3>Agendamentos</h3>
-                <p>0 cadastrados</p>
-            </div>
+          </section>
+
+          <section class="panel service-preview">
+            <div class="section-title"><div><h2>Serviços disponíveis</h2><p>Catálogo atual</p></div><button class="text-button" type="button" data-view-link="servicos">Ver catálogo ›</button></div>
+            {% for id, servico in servicos.items() %}
+              <div class="mini-service"><span>{{ "✦" if id < 3 else "♡" }}</span><div><strong>{{ servico.nome }}</strong><small>{{ servico.duracao }}</small></div><b>R$ {{ servico.preco }}</b></div>
+            {% endfor %}
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="clientes">
+        <div class="page-heading"><div><p>CADASTROS</p><h1>Clientes e pets</h1><small>Consulte os responsáveis e seus animais.</small></div><button class="primary open-modal" type="button">＋ Novo cadastro</button></div>
+        <section class="panel table-panel">
+          <div class="section-title"><div><h2>Todos os cadastros</h2><p>{{ resumo.clientes }} cliente(s) encontrado(s)</p></div></div>
+          {% if clientes %}
+          <div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Contato</th><th>Documento</th><th>Pet</th><th>Tipo</th><th>Serviço inicial</th></tr></thead><tbody>
+          {% for cliente in clientes %}{% set pet = cliente.Pets[0] if cliente.Pets else none %}
+            <tr class="searchable"><td><div class="client-name"><span>{{ cliente.Nome[:2]|upper }}</span><strong>{{ cliente.Nome }}</strong></div></td><td>{{ cliente.Telefone }}</td><td>{{ cliente.Documento }}</td><td>{{ pet.NomePet if pet else "—" }}</td><td>{{ pet.TipoPet if pet else "—" }}</td><td>{{ pet.Servicos[0].nome if pet and pet.Servicos else "Não informado" }}</td></tr>
+          {% endfor %}
+          </tbody></table></div>
+          {% else %}<div class="empty large"><span>♙</span><strong>Sua lista está vazia</strong><p>Os clientes cadastrados aparecerão aqui.</p><button class="primary open-modal" type="button">＋ Fazer primeiro cadastro</button></div>{% endif %}
+          <div class="search-empty" hidden><span>⌕</span><strong>Nenhum resultado encontrado</strong><p>Tente pesquisar por outro nome.</p></div>
         </section>
+      </section>
 
-        <section class="area-formulario">
-            <h2>Cadastro de Clientes</h2>
-            <form action="/cadastrar_cliente" method="POST">
-                <label for="nome"> Nome do Cliente</label>
-                <input type="text" id="" name="nome" placeholder="Digite o nome">
+      <section class="view" id="servicos">
+        <div class="page-heading"><div><p>CATÁLOGO</p><h1>Serviços</h1><small>Valores e duração dos serviços oferecidos.</small></div></div>
+        <div class="service-grid">
+          {% for id, servico in servicos.items() %}
+          <article class="service-card panel"><span class="service-icon {{ ['teal','amber','blue','rose'][id-1] }}">{{ ["✦","✂","♡","⌂"][id-1] }}</span><div><h2>{{ servico.nome }}</h2><p>Serviço profissional com cuidado e atenção ao pet.</p></div><footer><strong>R$ {{ servico.preco }}</strong><small>◷ {{ servico.duracao }}</small></footer></article>
+          {% endfor %}
+        </div>
+      </section>
 
+      <section class="view" id="financeiro">
+        <div class="page-heading"><div><p>RESULTADOS</p><h1>Financeiro</h1><small>Resumo calculado a partir dos serviços registrados.</small></div></div>
+        <div class="metrics finance">
+          <article class="metric"><span class="metric-icon teal">R$</span><div><small>Faturamento total</small><strong>R$ {{ "%.2f"|format(resumo.faturamento)|replace(".", ",") }}</strong><em>Receita acumulada</em></div></article>
+          <article class="metric"><span class="metric-icon blue">✦</span><div><small>Serviços realizados</small><strong>{{ resumo.atendimentos }}</strong><em>Registros no sistema</em></div></article>
+          <article class="metric"><span class="metric-icon amber">↗</span><div><small>Ticket médio</small><strong>R$ {{ "%.2f"|format(resumo.faturamento / resumo.atendimentos if resumo.atendimentos else 0)|replace(".", ",") }}</strong><em>Por atendimento</em></div></article>
+        </div>
+        <section class="panel finance-panel"><div class="section-title"><div><h2>Visão financeira</h2><p>Os dados crescerão conforme os serviços forem cadastrados.</p></div></div><div class="finance-visual"><div class="ring"><span>R$</span><strong>{{ "%.0f"|format(resumo.faturamento) }}</strong></div><div><h3>Seu pet shop em números</h3><p>Esta primeira versão calcula o faturamento total em memória. A próxima evolução será persistir clientes, pets e serviços em um banco de dados.</p></div></div></section>
+      </section>
+    </div>
+  </main>
 
-                <label for="documento"> Documento</label>
-                <input type="text" id="" name ="documento" placeholder="Digite o nome">
-
-
-                <label for="telefone"> Telefone</label>
-                <input type="tel" id="" name="telefone" placeholder="(00) 00000-0000">
-
-                <label for="endereco"> Endereço</label>
-                <input type="text" id="" name="endereco" placeholder="Digite seu endereço e número">
-
-                <label for="nome-pet">Nome do Pet</label>
-                <input type="text" id="" name="nome-pet" placeholder="Digite o nome do Pet">
-
-                <label for="tipo-pet">Tipo do pet</label>
-                <select id="" name = "tipo-pet">
-                    <option>Cachorro</option>
-                    <option>Gato</option>
-                    <option>Outro</option>
-                </select>
-
-                <label for="servico">Serviços</label>
-                <select id="" nome="servico">
-                    <option>Banho</option>
-                    <option>Tosa</option>
-                    <option>Consulta</option>
-                    <option>Vacina</option>
-                </select>
-                
-                <section class="tabela-clientes">
-                    <h2>Clientes cadastrados</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Pet</th>
-                                <th>Tipo</th>
-                                <th>Serviço</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            <tr>
-
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </section>
-                <button type="submit">
-                    Cadastrar Cliente
-                </button>
-
-            </form>
-        </section>
-      </main>
+  <dialog class="modal" id="register-modal">
+    <form action="{{ url_for('cadastrar') }}" method="post">
+      <header><div><span>NOVO CADASTRO</span><h2>Cliente e pet</h2><p>Preencha os dados para adicionar um novo atendimento.</p></div><button class="modal-close" type="button" aria-label="Fechar">×</button></header>
+      <div class="form-section"><h3>Dados do responsável</h3><div class="form-grid">
+        <label>Nome completo<input name="nome" type="text" placeholder="Ex.: Mariana Alves" required></label>
+        <label>Documento<input name="documento" type="text" placeholder="CPF ou documento" required></label>
+        <label>Telefone<input name="telefone" type="tel" placeholder="(00) 00000-0000" required></label>
+        <label>Endereço<input name="endereco" type="text" placeholder="Rua, número e bairro" required></label>
+      </div></div>
+      <div class="form-section"><h3>Dados do pet</h3><div class="form-grid">
+        <label>Nome do pet<input name="nome_pet" type="text" placeholder="Ex.: Nina" required></label>
+        <label>Tipo do pet<select name="tipo_pet" required><option value="">Selecione</option><option>Cachorro</option><option>Gato</option><option>Outro</option></select></label>
+        <label class="full">Serviço inicial<select name="servico_id"><option value="">Nenhum serviço agora</option>{% for id, servico in servicos.items() %}<option value="{{ id }}">{{ servico.nome }} — R$ {{ servico.preco }}</option>{% endfor %}</select></label>
+      </div></div>
+      <footer><button class="secondary modal-close" type="button">Cancelar</button><button class="primary" type="submit">Salvar cadastro</button></footer>
+    </form>
+  </dialog>
 </body>
 </html>
