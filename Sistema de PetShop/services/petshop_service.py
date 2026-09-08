@@ -1,138 +1,137 @@
 from repositories.dados import Clientes, Pets, Servicos_Disponiveis
 
-def Cadastrar_Clientes(nome, documento, telefone, endereco):
- ##Validação do Documento do cliente na hora do cadastro.
- ##Esse loop pega o documento digitado e compara com o que aparece dentro
- ##da lista Clientes, caso o documento apareça é enviado um mensagem de error
- ##como podemos ver na linha 15
- 
- for Cliente in Clientes:
-   if Cliente["Documento"] == documento:
-     print(" ERROR O cliente já está cadastrado!")
-     return
- Cliente = {
-   "Nome" : nome,
-   "Documento" : documento,
-   "Telefone": telefone,
-   "Endereco": endereco
-   }
 
- Clientes.append(Cliente)#Adiciona o cliente na Lista Clientes
- print(Clientes)  
+def _texto_obrigatorio(valor, campo):
+    texto = str(valor or "").strip()
+    if not texto:
+        raise ValueError(f"O campo {campo} é obrigatório.")
+    return texto
 
 
-def Cadastrar_Pets(documento, nomedopet, tipopet, servico):
-    ##Esse loop serve para garantir que um cliente não cadastre o mesmo pet duas vezes.
-    #Um cliente pode ter vários pets, mas não pode ter dois pets com o mesmo nome cadastrado.
-    #Ele percorre a lista de pets existentes e, se encontrar um pet com o mesmo nome e mesmo dono, bloqueia o cadastro.
-    for Pet in Pets:
-      if Pet["NomePet"] == nomedopet and Pet["DocumentoDono"] == documento:
-       print("ERROR o Pet já está cadastrado em nosso sistema")
-       return
-      
-    # Esse loop verifica se o cliente (dono do pet) já está cadastrado.
-    # Se o documento do dono não for encontrado na lista Clientes, 
-    # é exibida uma mensagem de erro e o cadastro do pet é cancelado.
-    for Cliente in Clientes:
-     if Cliente["Documento"] == documento:
-       break
-    else:
-     print("O dono não foi cadastrado. Cadastre o cliente primeiro.")
-     return
+def cadastrar_cliente(nome, documento, telefone, endereco):
+    nome = _texto_obrigatorio(nome, "nome")
+    documento = _texto_obrigatorio(documento, "documento")
+    telefone = _texto_obrigatorio(telefone, "telefone")
+    endereco = _texto_obrigatorio(endereco, "endereço")
 
-     
-    Pet = {
-     "NomePet" : nomedopet,
-     "TipoPet" : tipopet,
-     "DocumentoDono": documento,
-     "Servicos":servico 
+    if any(cliente["Documento"] == documento for cliente in Clientes):
+        raise ValueError("Já existe um cliente com esse documento.")
+
+    cliente = {
+        "Nome": nome,
+        "Documento": documento,
+        "Telefone": telefone,
+        "Endereco": endereco,
     }
-    Pets.append(Pet)
-    print(Pets)
+    Clientes.append(cliente)
+    return cliente
+
+
+def cadastrar_pet(documento_dono, nome_pet, tipo_pet, servico_id=None):
+    documento_dono = _texto_obrigatorio(documento_dono, "documento")
+    nome_pet = _texto_obrigatorio(nome_pet, "nome do pet")
+    tipo_pet = _texto_obrigatorio(tipo_pet, "tipo do pet")
+
+    if not any(cliente["Documento"] == documento_dono for cliente in Clientes):
+        raise ValueError("Cadastre o responsável antes de cadastrar o pet.")
+
+    if any(
+        pet["DocumentoDono"] == documento_dono
+        and pet["NomePet"].casefold() == nome_pet.casefold()
+        for pet in Pets
+    ):
+        raise ValueError("Esse pet já está cadastrado para o responsável.")
+
+    servicos = []
+    if str(servico_id or "").strip():
+        try:
+            servico = Servicos_Disponiveis[int(servico_id)]
+        except (KeyError, ValueError):
+            raise ValueError("Selecione um serviço válido.") from None
+        servicos.append(servico.copy())
+
+    pet = {
+        "NomePet": nome_pet,
+        "TipoPet": tipo_pet,
+        "DocumentoDono": documento_dono,
+        "Servicos": servicos,
+    }
+    Pets.append(pet)
+    return pet
+
+
+def cadastrar_cliente_com_pet(
+    nome,
+    documento,
+    telefone,
+    endereco,
+    nome_pet,
+    tipo_pet,
+    servico_id=None,
+):
+    documento_limpo = _texto_obrigatorio(documento, "documento")
+
+    if any(cliente["Documento"] == documento_limpo for cliente in Clientes):
+        raise ValueError("Já existe um cliente com esse documento.")
+
+    cliente = cadastrar_cliente(nome, documento_limpo, telefone, endereco)
+    try:
+        pet = cadastrar_pet(
+            documento_limpo,
+            nome_pet,
+            tipo_pet,
+            servico_id,
+        )
+    except ValueError:
+        Clientes.remove(cliente)
+        raise
+
+    return cliente, pet
+
+
+def clientes_com_pets():
+    resultado = []
+    for cliente in Clientes:
+        pets_do_cliente = [
+            pet for pet in Pets
+            if pet["DocumentoDono"] == cliente["Documento"]
+        ]
+        resultado.append({**cliente, "Pets": pets_do_cliente})
+    return resultado
+
+
+def obter_resumo():
+    faturamento = sum(
+        servico["preco"]
+        for pet in Pets
+        for servico in pet["Servicos"]
+    )
+    atendimentos = sum(len(pet["Servicos"]) for pet in Pets)
+
+    return {
+        "clientes": len(Clientes),
+        "pets": len(Pets),
+        "atendimentos": atendimentos,
+        "faturamento": faturamento,
+    }
+
+
+# Compatibilidade temporária com nomes usados na versão de console.
+Cadastrar_Clientes = cadastrar_cliente
+Cadastrar_Pets = cadastrar_pet
 
 
 def Cadastrar_Servicos():
-    Nome_Pet = input("Nome do pet (0 para cancelar): ")
-    if Nome_Pet == "0":
-        return
+    raise RuntimeError("Use a interface web para registrar serviços.")
 
-    # Procura o pet
-    for Pet in Pets:
-        if Pet["NomePet"] == Nome_Pet:
-            break
-    else:
-        print("Pet não encontrado!")
-        return
 
-    while True:     
-     ## Essa parte é um loop que percorre todos os itens do dicionário Servicos_Disponiveis.
-      print("Serviços disponíveis:")
-      for k, v in Servicos_Disponiveis.items():## O método .items() retorna todos os pares (chave, valor) do dicionário, permitindo acessar os dois ao mesmo tempo no loop (k = chave, v = valor).
-         print(f"{k} - {v['nome']} R$ {v['preco']}")## Em seguida, exibe na tela o código do serviço (k), o nome e o preço de cada serviço.
-      
-      opcao = int(input("Escolha o serviço (0 para finalizar): "))
-      
-      if opcao == 0:
-         break
-      
-      if opcao in Servicos_Disponiveis:
-         servico = Servicos_Disponiveis[opcao]
-         Pet["Servicos"].append(servico)
-         print("Serviço cadastrado com sucesso!")
-      else:
-        print("Serviço inválido!")
-   
 def Buscar_Pet():
-    Documento_Busca = input("Digite o documento do dono: ")
-    for Cliente in Clientes:
-        if Cliente["Documento"] == Documento_Busca:
-            print("Nome do Dono: ", Cliente["Nome"])
-            for Pet in Pets:
-                if Pet["DocumentoDono"] == Documento_Busca:
-                    print("Nome do Pet: ", Pet["NomePet"])
-                    print("Raca: ", Pet["Raca"])
-                    print("Sexo: ", Pet["Sexo"])
-                    if Pet["Servicos"]:
-                        print("Serviços Cadastrados: ")
-                        for servico in Pet["Servicos"]:
-                            print(f"{servico['nome']} | R$ {servico['preco']}")
-                    else:
-                        print("Nenhum serviço encontrado")
-                        print("---------------------") 
-                    break
-            else:
-                print("Pet não encontrado")
-                print("---------------------") 
-                return
+    raise RuntimeError("Use a busca da interface web.")
+
 
 def Relatorio():
-    for Cliente in Clientes:
-        print("Cliente: ", Cliente["Nome"])
-        print("Documento: ", Cliente["Documento"])
-        print("Telefone: ", Cliente["Telefone"])
-        print("Endereço: ", Cliente["Endereco"])
-        print(" ------------------------------- ")
+    return clientes_com_pets()
 
-        for Pet in Pets:
-            if Pet["DocumentoDono"] == Cliente["Documento"]:
-                print("Pet:", Pet["NomePet"])
-                print("Raca: ", Pet["Raca"])
-                print("Sexo: ", Pet["Sexo"])
-                print(" ------------------------------- ")
 
-                if Pet["Servicos"]:
-                    print("Serviços realizados: ")
-                    for Servico in Pet["Servicos"]:
-                        print(f" - {Servico['nome']} | R$ {Servico['preco']}")
-                else:
-                    print("Nenhum serviço cadastrado")
-
-                print(" ------------------------------- ")
-       
 def Faturamento():
- Soma= 0
- for Pet in Pets: ##Procura dentro da lista Pets
-    for Servico in Pet["Servicos"]:## Para cada pet, percorre a lista de serviços realizados
-       Soma += Servico['preco']## Soma o preço de cada serviço, gerando o faturamento total
- print("== Faturamento ==")
- print("R$: ", Soma)
+    return obter_resumo()["faturamento"]
