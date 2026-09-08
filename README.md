@@ -1,4 +1,4 @@
-# Sistema de Petshop — PROZ
+# Petly Gestão Pet
 
 Sistema web em Python e Flask para cadastro de clientes, pets, serviços e acompanhamento do faturamento.
 
